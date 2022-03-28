@@ -3,6 +3,7 @@ const bcrypt = require("bcryptjs");
 
 const User = require("../models/User");
 const { generateJWT } = require("../helpers/jwt");
+const { createWallet } = require("../helpers/web3Common");
 
 const createUser = async (req, res = response) => {
   const { name, email, password } = req.body;
@@ -23,6 +24,13 @@ const createUser = async (req, res = response) => {
     const salt = bcrypt.genSaltSync();
     user.password = bcrypt.hashSync(password, salt);
 
+    // create eth account
+    const { address, privateKey } = await createWallet();
+
+    user.address = address;
+    user.privateKey = privateKey;
+
+    console.log("user: ", user);
     await user.save();
 
     // Generate JWT
