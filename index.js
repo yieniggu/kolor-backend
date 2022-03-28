@@ -18,8 +18,8 @@ app.use(express.json());
 app.use(express.static("public"));
 
 app.use("/api/auth", require("./routes/auth"));
-app.use("/api/events", require("./routes/events"));
 app.use("/api/lands", require("./routes/lands"));
+app.use("/api/marketplace", require("./routes/marketplace"));
 
 // Listen requests
 app.listen(process.env.PORT, () => {
