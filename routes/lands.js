@@ -1,13 +1,17 @@
 const { Router } = require("express");
-const { check } = require("express-validator");
 const { jwtValidator } = require("../middlewares/jwtValidator");
 
-const { mintNFT } = require("../controllers/lands");
+const { mintNFT, getNFTsMinted, updateState } = require("../controllers/lands");
+const { isAdmin } = require("../helpers/isAdmin");
 
 const router = new Router();
 
 router.use(jwtValidator);
 
-router.post("/", mintNFT);
+router.get("/", getNFTsMinted);
+
+router.post("/", [isAdmin], mintNFT);
+
+router.put("/:id/state", [isAdmin], updateState);
 
 module.exports = router;

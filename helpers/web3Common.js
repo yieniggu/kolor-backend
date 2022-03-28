@@ -1,14 +1,21 @@
 const Web3 = require("web3");
+const { marketplaceAbi } = require("../abis/Marketplace");
 const { NFTAbi } = require("../abis/NFT");
-const { maxDecimalsOf, normalizeNumber } = require("../utils/web3Utils");
 
 const web3 = new Web3("https://alfajores-forno.celo-testnet.org");
 
-const createNFTContract = () => {
-  const contract = new web3.eth.Contract(
-    NFTAbi,
-    "0x8b9eaEBEb8E097Fc2b9B637ab73170161677a385"
+const createWallet = async () => {
+  const { address, privateKey } = await web3.eth.accounts.create();
+
+  console.log(
+    `new wallet created with address: ${address} - pk: ${privateKey}`
   );
+
+  return { address, privateKey };
+};
+
+const createNFTContract = () => {
+  const contract = new web3.eth.Contract(NFTAbi, process.env.NFT_ADDRESS);
 
   return contract;
 };
@@ -16,7 +23,7 @@ const createNFTContract = () => {
 const createMarketplaceContract = () => {
   const contract = new web3.eth.Contract(
     marketplaceAbi,
-    "0x69c6059644de90bE598727431120467ee0acC5B4"
+    process.env.MARKETPLACE_ADDRESS
   );
 
   return contract;
@@ -39,8 +46,9 @@ const getNonce = async () => {
 };
 
 module.exports = {
+  createWallet,
   createNFTContract,
   createMarketplaceContract,
   getGasPrice,
-  getNonce
+  getNonce,
 };
