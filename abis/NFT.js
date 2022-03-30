@@ -93,7 +93,7 @@ const NFTAbi = [
     type: "function",
     stateMutability: "nonpayable",
     outputs: [],
-    name: "addCordinate",
+    name: "addPoint",
     inputs: [
       { type: "uint256", name: "tokenId", internalType: "uint256" },
       {
@@ -101,9 +101,11 @@ const NFTAbi = [
         name: "point",
         internalType: "struct GeoSpatialPoint",
         components: [
-          { type: "uint256", name: "latitude", internalType: "uint256" },
-          { type: "uint256", name: "longitude", internalType: "uint256" },
+          { type: "int256", name: "latitude", internalType: "int256" },
+          { type: "int256", name: "longitude", internalType: "int256" },
           { type: "uint256", name: "decimals", internalType: "uint256" },
+          { type: "uint256", name: "creationDate", internalType: "uint256" },
+          { type: "uint256", name: "updateDate", internalType: "uint256" },
         ],
       },
     ],
@@ -339,9 +341,11 @@ const NFTAbi = [
     type: "function",
     stateMutability: "view",
     outputs: [
-      { type: "uint256", name: "latitude", internalType: "uint256" },
-      { type: "uint256", name: "longitude", internalType: "uint256" },
+      { type: "int256", name: "latitude", internalType: "int256" },
+      { type: "int256", name: "longitude", internalType: "int256" },
       { type: "uint256", name: "decimals", internalType: "uint256" },
+      { type: "uint256", name: "creationDate", internalType: "uint256" },
+      { type: "uint256", name: "updateDate", internalType: "uint256" },
     ],
     name: "points",
     inputs: [
@@ -429,7 +433,16 @@ const NFTAbi = [
     type: "function",
     stateMutability: "nonpayable",
     outputs: [],
-    name: "setCoordinates",
+    name: "setMarketplace",
+    inputs: [
+      { type: "address", name: "_marketplace", internalType: "address" },
+    ],
+  },
+  {
+    type: "function",
+    stateMutability: "nonpayable",
+    outputs: [],
+    name: "setPoints",
     inputs: [
       { type: "uint256", name: "tokenId", internalType: "uint256" },
       {
@@ -437,20 +450,13 @@ const NFTAbi = [
         name: "_points",
         internalType: "struct GeoSpatialPoint[]",
         components: [
-          { type: "uint256", name: "latitude", internalType: "uint256" },
-          { type: "uint256", name: "longitude", internalType: "uint256" },
+          { type: "int256", name: "latitude", internalType: "int256" },
+          { type: "int256", name: "longitude", internalType: "int256" },
           { type: "uint256", name: "decimals", internalType: "uint256" },
+          { type: "uint256", name: "creationDate", internalType: "uint256" },
+          { type: "uint256", name: "updateDate", internalType: "uint256" },
         ],
       },
-    ],
-  },
-  {
-    type: "function",
-    stateMutability: "nonpayable",
-    outputs: [],
-    name: "setMarketplace",
-    inputs: [
-      { type: "address", name: "_marketplace", internalType: "address" },
     ],
   },
   {
@@ -580,6 +586,13 @@ const NFTAbi = [
     type: "function",
     stateMutability: "view",
     outputs: [{ type: "uint256", name: "", internalType: "uint256" }],
+    name: "totalPointsOf",
+    inputs: [{ type: "uint256", name: "tokenId", internalType: "uint256" }],
+  },
+  {
+    type: "function",
+    stateMutability: "view",
+    outputs: [{ type: "uint256", name: "", internalType: "uint256" }],
     name: "totalSpecies",
     inputs: [{ type: "uint256", name: "", internalType: "uint256" }],
   },
@@ -636,30 +649,11 @@ const NFTAbi = [
     type: "function",
     stateMutability: "nonpayable",
     outputs: [],
-    name: "updateCordinate",
-    inputs: [
-      { type: "uint256", name: "tokenId", internalType: "uint256" },
-      { type: "uint256", name: "pointIndex", internalType: "uint256" },
-      {
-        type: "tuple",
-        name: "point",
-        internalType: "struct GeoSpatialPoint",
-        components: [
-          { type: "uint256", name: "latitude", internalType: "uint256" },
-          { type: "uint256", name: "longitude", internalType: "uint256" },
-          { type: "uint256", name: "decimals", internalType: "uint256" },
-        ],
-      },
-    ],
-  },
-  {
-    type: "function",
-    stateMutability: "nonpayable",
-    outputs: [],
     name: "updateLandOwner",
     inputs: [
       { type: "uint256", name: "tokenId", internalType: "uint256" },
       { type: "address", name: "newLandOwner", internalType: "address" },
+      { type: "string", name: "name", internalType: "string" },
     ],
   },
   {
@@ -680,6 +674,28 @@ const NFTAbi = [
     inputs: [
       { type: "uint256", name: "tokenId", internalType: "uint256" },
       { type: "string", name: "newName", internalType: "string" },
+    ],
+  },
+  {
+    type: "function",
+    stateMutability: "nonpayable",
+    outputs: [],
+    name: "updatePoint",
+    inputs: [
+      { type: "uint256", name: "tokenId", internalType: "uint256" },
+      { type: "uint256", name: "pointIndex", internalType: "uint256" },
+      {
+        type: "tuple",
+        name: "point",
+        internalType: "struct GeoSpatialPoint",
+        components: [
+          { type: "int256", name: "latitude", internalType: "int256" },
+          { type: "int256", name: "longitude", internalType: "int256" },
+          { type: "uint256", name: "decimals", internalType: "uint256" },
+          { type: "uint256", name: "creationDate", internalType: "uint256" },
+          { type: "uint256", name: "updateDate", internalType: "uint256" },
+        ],
+      },
     ],
   },
   {
