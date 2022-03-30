@@ -1,4 +1,5 @@
 const { response } = require("express");
+const { getMintedNFTs } = require("../helpers/landNFT");
 const { offsetEmissions } = require("../helpers/marketplace");
 const User = require("../models/User");
 
@@ -27,8 +28,28 @@ const newOffsetEmissions = async (req, res = response) => {
   }
 };
 
+const getPublishedLands = async (req, res = response) => {
+  try {
+    const mintedNFTs = await getMintedNFTs();
+    const publishedNFTS = mintedNFTs.filter(
+      (mintedNFT) => mintedNFT.state === "3"
+    );
 
+    return res.status(200).json({
+      ok: true,
+      publishedNFTS,
+    });
+  } catch (err) {
+    console.error(err);
+
+    return res.status(500).json({
+      ok: false,
+      msg: "Internal server error",
+    });
+  }
+};
 
 module.exports = {
   newOffsetEmissions,
+  getPublishedLands,
 };
