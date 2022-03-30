@@ -1,6 +1,12 @@
 const { response } = require("express");
-const { getMintedNFTs, updateLandState } = require("../helpers/landNFT");
+const {
+  getMintedNFTs,
+  updateLandState,
+  setSpecies,
+  setPoints,
+} = require("../helpers/landNFT");
 const { safeMint } = require("../helpers/landNFT");
+const { getInitialTCO2 } = require("../utils/web3Utils");
 
 /* ############################ 
 
@@ -16,9 +22,13 @@ const getNFTsMinted = async (req, res = response) => {
 
   try {
     const mintedNFTs = await getMintedNFTs();
+    const notPublishedNFTS = mintedNFTs.filter(
+      (mintedNFT) => mintedNFT.state !== "3"
+    );
+
     return res.status(200).json({
       ok: true,
-      mintedNFTs,
+      notPublishedNFTS,
     });
   } catch (err) {
     console.error(err);
@@ -38,17 +48,23 @@ const getNFTsMinted = async (req, res = response) => {
    ############################          */
 
 const mintNFT = async (req, res = response) => {
-  const { landAttributes } = req.body;
+  const { landAttributes, species, points } = req.body;
 
   try {
+    const initialTCO2 = getInitialTCO2(species);
+    landAttributes.initialTCO2 = initialTCO2;
+
     const mintingReceipt = await safeMint(landAttributes);
-    //const addSpeciesReceipt = await addSpecies()
+
+    const setSpeciesReceipt = await setSpecies(mintingReceipt.tokenId, species);
+    const setPointsReceipt = await setPoints(mintingReceipt.tokenId, points);
 
     return res.status(201).json({
       ok: true,
       receipts: [
-        mintingReceipt,
-        //addSpeciesReceipt
+        { transaction: "Minting", mintingReceipt },
+        { transaction: "Set Species", setSpeciesReceipt },
+        { transaction: "Set Points", setPointsReceipt },
       ],
     });
   } catch (err) {

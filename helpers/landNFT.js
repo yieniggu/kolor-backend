@@ -1,10 +1,22 @@
 const Web3 = require("web3");
-const { maxDecimalsOf, normalizeNumber } = require("../utils/web3Utils");
+const {
+  maxDecimalsOf,
+  normalizeNumber,
+  convertSpeciesToArray,
+  convertPointsToArray,
+} = require("../utils/web3Utils");
 const { createNFTContract, getGasPrice, getNonce } = require("./web3Common");
 
 const NFTContract = createNFTContract();
 const web3 = new Web3("https://alfajores-forno.celo-testnet.org");
 const burnAddress = "0x0000000000000000000000000000000000000000";
+
+/* ############################ 
+
+            SETTERS
+
+
+   ############################          */
 
 /* Get all minted species info one by one */
 const getMintedNFTs = async () => {
@@ -17,11 +29,15 @@ const getMintedNFTs = async () => {
     if (owner != burnAddress) {
       let NFTInfo = await NFTContract.methods.getNFTInfo(i).call();
       NFTInfo = extractNFTProps(NFTInfo);
-      console.log(`nft info of token ${i}: `, NFTInfo);
-      const species = await getSpecies(NFTContract, i);
+      //console.log(`nft info of token ${i}: `, NFTInfo);
+      const species = await getSpecies(i);
+      const points = await getPoints(i);
 
       NFTInfo.owner = owner;
       NFTInfo.species = species;
+      NFTInfo.points = points;
+      NFTInfo.tokenId = i;
+      console.log("NFT ", i, NFTInfo);
       mintedNFTS.push(NFTInfo);
     } else {
       console.log("Token ", i, " is burned");
@@ -32,16 +48,30 @@ const getMintedNFTs = async () => {
 };
 
 /* Gett all species of a given land */
-const getSpecies = async (contract, tokenId) => {
-  const totalSpecies = await contract.methods.totalSpeciesOf(tokenId).call();
+const getSpecies = async (tokenId) => {
+  const totalSpecies = await NFTContract.methods.totalSpeciesOf(tokenId).call();
   const species = [];
   for (let i = 0; i < totalSpecies; i++) {
-    let specie = await contract.methods.species(tokenId, i).call();
+    let specie = await NFTContract.methods.species(tokenId, i).call();
     specie = extractSpecieProps(specie);
     species.push(specie);
   }
 
   return species;
+};
+
+/* Get all points of a given land */
+const getPoints = async (tokenId) => {
+  const totalPoints = await NFTContract.methods.totalPointsOf(tokenId).call();
+  const points = [];
+
+  for (let i = 0; i < totalPoints; i++) {
+    let point = await NFTContract.methods.points(tokenId, i).call();
+    point = extractPointProps(point);
+    points.push(point);
+  }
+
+  return points;
 };
 
 /* ############################ 
@@ -115,6 +145,7 @@ const safeMint = async (landAttributes) => {
   );
 
   receipt.tokenId = parseInt(receipt.logs[0].topics[3]);
+  console.log("mint nft receipt: ", receipt);
   return receipt;
 };
 
@@ -145,11 +176,96 @@ const updateLandState = async (tokenId, state) => {
     process.env.DEV_PRIVATE_KEY
   );
 
-  console.log(signedTransaction);
-  
+  //console.log(signedTransaction);
+
   const receipt = await web3.eth.sendSignedTransaction(
     signedTransaction.raw || signedTransaction.rawTransaction
   );
+
+  console.log("update land state receipt: ", receipt);
+  return receipt;
+};
+
+const setSpecies = async (tokenId, species) => {
+  if (!species) return null;
+
+  const { address } = web3.eth.accounts.privateKeyToAccount(
+    process.env.DEV_PRIVATE_KEY
+  );
+
+  const speciesAsArrays = convertSpeciesToArray(species);
+  console.log("sparrs: ", speciesAsArrays);
+
+  const encodedTransaction = await NFTContract.methods
+    .setSpecies(tokenId, speciesAsArrays)
+    .encodeABI();
+
+  const gas = 250000 * species.length;
+  const gasPrice = web3.utils.toHex(await getGasPrice());
+  const nonce = web3.utils.toHex(await getNonce());
+
+  let txParams = {
+    from: web3.utils.toChecksumAddress(address),
+    to: process.env.NFT_ADDRESS,
+    gas,
+    gasPrice,
+    nonce,
+    data: encodedTransaction,
+  };
+  // Signs transaction to execute with private key on backend side
+  const signedTransaction = await web3.eth.accounts.signTransaction(
+    txParams,
+    process.env.DEV_PRIVATE_KEY
+  );
+
+  //console.log(signedTransaction);
+
+  const receipt = await web3.eth.sendSignedTransaction(
+    signedTransaction.raw || signedTransaction.rawTransaction
+  );
+
+  console.log("set species receipt: ", receipt);
+
+  return receipt;
+};
+
+const setPoints = async (tokenId, points) => {
+  if (!points) return null;
+  const pointsAsArrays = convertPointsToArray(points);
+
+  const { address } = web3.eth.accounts.privateKeyToAccount(
+    process.env.DEV_PRIVATE_KEY
+  );
+
+  const encodedTransaction = await NFTContract.methods
+    .setPoints(tokenId, pointsAsArrays)
+    .encodeABI();
+
+  const gas = 250000 * points.length;
+  const gasPrice = web3.utils.toHex(await getGasPrice());
+  const nonce = web3.utils.toHex(await getNonce());
+
+  let txParams = {
+    from: web3.utils.toChecksumAddress(address),
+    to: process.env.NFT_ADDRESS,
+    gas,
+    gasPrice,
+    nonce,
+    data: encodedTransaction,
+  };
+  // Signs transaction to execute with private key on backend side
+  const signedTransaction = await web3.eth.accounts.signTransaction(
+    txParams,
+    process.env.DEV_PRIVATE_KEY
+  );
+
+  //console.log(signedTransaction);
+
+  const receipt = await web3.eth.sendSignedTransaction(
+    signedTransaction.raw || signedTransaction.rawTransaction
+  );
+
+  console.log("set points receipt: ", receipt);
 
   return receipt;
 };
@@ -186,6 +302,16 @@ const extractSpecieProps = (specie) => {
     TCO2,
     creationDate,
     updateDate,
+    decimals,
+  };
+};
+
+const extractPointProps = (point) => {
+  const { latitude, longitude, decimals } = point;
+
+  return {
+    latitude,
+    longitude,
     decimals,
   };
 };
@@ -230,4 +356,6 @@ module.exports = {
   safeMint,
   getMintedNFTs,
   updateLandState,
+  setSpecies,
+  setPoints,
 };
