@@ -6,6 +6,7 @@
 const { Router } = require("express");
 const { check } = require("express-validator");
 const { createUser, login, refreshJWT } = require("../controllers/auth");
+const { isAdmin } = require("../helpers/isAdmin");
 const { validateFields } = require("../middlewares/fieldValidators");
 const { jwtValidator } = require("../middlewares/jwtValidator");
 
@@ -20,6 +21,7 @@ router.post(
     check("email", "Valid email required").isEmail(),
     check("password", "Min password length must be 6").isLength({ min: 6 }),
     validateFields,
+    isAdmin,
   ],
   createUser
 );
