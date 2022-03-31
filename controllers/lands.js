@@ -57,7 +57,7 @@ const getLandVCUs = async (req, res = response) => {
 
     return res.status(500).json({
       ok: false,
-      msg: "Internal server error",
+      msg: "Internal server error. VCUs",
     });
   }
 };

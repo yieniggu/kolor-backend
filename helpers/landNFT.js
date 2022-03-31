@@ -79,17 +79,17 @@ const getVCUs = async (tokenId) => {
   let NFTInfo = await NFTContract.methods.getNFTInfo(tokenId).call();
   NFTInfo = extractNFTProps(NFTInfo);
   //Generated VCUs
-  const generatedVCUs = await NFTContract.methods.totalVCUsEmitedBy(tokenId).call();
+  const generatedVCUs = await NFTContract.methods.totalVCUSEmitedBy(tokenId).call();
   //Sold VCUs  
   const VCUsLeft = await NFTContract.methods.getVCUSLeft(tokenId).call();
   const soldTCO2 = generatedVCUs - VCUsLeft
-  //Total VCUs
+  //Projected VCUs
   const fiveYears = 157680000 //in seconds. Replace with liberation Date if implemented
   const timeElapsed = Math.floor(Date.now() / 1000) - NFTInfo.creationDate;
   const timeTotal = fiveYears - NFTInfo.creationDate;
-  const totalVCUs = (generatedVCUs * timeTotal)/timeElapsed;
+  const projectedVCUs = (generatedVCUs * timeTotal)/timeElapsed;
   
-  return {'generatedVCUs':generatedVCUs,'projectedVCUs':projectedVCUs,'soldVCUs':soldVCUs};
+  return {'generatedVCUs':generatedVCUs,'projectedVCUs':projectedVCUs,'soldVCUs':soldTCO2};
 };
 
 /* ############################ 
