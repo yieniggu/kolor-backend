@@ -4,6 +4,7 @@ const {
   updateLandState,
   setSpecies,
   setPoints,
+  getVCUs,
 } = require("../helpers/landNFT");
 const { safeMint } = require("../helpers/landNFT");
 const { getInitialTCO2 } = require("../utils/web3Utils");
@@ -36,6 +37,27 @@ const getNFTsMinted = async (req, res = response) => {
     return res.status(500).json({
       ok: false,
       msg: "Internal server error",
+    });
+  }
+};
+
+const getLandVCUs = async (req, res = response) => {
+  //const { state } = req.body;
+  const { id: tokenId } = req.params;
+
+  try {
+    receipt = await getVCUs(tokenId);
+
+    return res.status(200).json({
+      ok: true,
+      receipt,
+    });
+  } catch (error) {
+    console.error(error);
+
+    return res.status(500).json({
+      ok: false,
+      msg: "Internal server error. VCUs",
     });
   }
 };
@@ -97,4 +119,4 @@ const updateState = async (req, res = response) => {
   }
 };
 
-module.exports = { mintNFT, getNFTsMinted, updateState };
+module.exports = { mintNFT, getNFTsMinted, updateState, getLandVCUs };

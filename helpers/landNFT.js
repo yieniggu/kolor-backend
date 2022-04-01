@@ -13,7 +13,7 @@ const burnAddress = "0x0000000000000000000000000000000000000000";
 
 /* ############################ 
 
-            SETTERS
+            GETTERS
 
 
    ############################          */
@@ -72,6 +72,24 @@ const getPoints = async (tokenId) => {
   }
 
   return points;
+};
+
+/* VCUs generated, projected and sold */
+const getVCUs = async (tokenId) => {
+  let NFTInfo = await NFTContract.methods.getNFTInfo(tokenId).call();
+  NFTInfo = extractNFTProps(NFTInfo);
+  //Generated VCUs
+  const generatedVCUs = await NFTContract.methods.totalVCUSEmitedBy(tokenId).call();
+  //Sold VCUs  
+  const VCUsLeft = await NFTContract.methods.getVCUSLeft(tokenId).call();
+  const soldTCO2 = generatedVCUs - VCUsLeft
+  //Projected VCUs
+  const fiveYears = 157680000 //in seconds. Replace with liberation Date if implemented
+  const timeElapsed = Math.floor(Date.now() / 1000) - NFTInfo.creationDate;
+  const timeTotal = fiveYears - NFTInfo.creationDate;
+  const projectedVCUs = (generatedVCUs * timeTotal)/timeElapsed;
+  
+  return {'generatedVCUs':generatedVCUs,'projectedVCUs':projectedVCUs,'soldVCUs':soldTCO2};
 };
 
 /* ############################ 
@@ -358,4 +376,5 @@ module.exports = {
   updateLandState,
   setSpecies,
   setPoints,
+  getVCUs,
 };
