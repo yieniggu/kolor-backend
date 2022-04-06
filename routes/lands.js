@@ -1,7 +1,7 @@
 const { Router } = require("express");
 const { jwtValidator } = require("../middlewares/jwtValidator");
 
-const { mintNFT, getNFTsMinted, updateState } = require("../controllers/lands");
+const { mintNFT, getNFTsMinted, updateState, getLandVCUs } = require("../controllers/lands");
 const { isAdmin } = require("../helpers/isAdmin");
 
 const router = new Router();
@@ -16,5 +16,8 @@ router.post("/", [isAdmin], mintNFT);
 
 // Updates the state of an existing land
 router.put("/:id/state", [isAdmin], updateState);
+
+// Get VCUs
+router.get("/:id/vcus", getLandVCUs);
 
 module.exports = router;
