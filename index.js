@@ -20,6 +20,7 @@ app.use(express.static("public"));
 app.use("/api/auth", require("./routes/auth"));
 app.use("/api/lands", require("./routes/lands"));
 app.use("/api/marketplace", require("./routes/marketplace"));
+app.use("/api/offsets", require("./routes/offsetRequest"));
 
 // Listen requests
 app.listen(process.env.PORT, () => {
