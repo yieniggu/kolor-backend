@@ -5,6 +5,7 @@ const {
   setSpecies,
   setPoints,
   getVCUs,
+  getNFTInfo,
 } = require("../helpers/landNFT");
 const { safeMint } = require("../helpers/landNFT");
 const { getInitialTCO2 } = require("../utils/web3Utils");
@@ -23,13 +24,13 @@ const getNFTsMinted = async (req, res = response) => {
 
   try {
     const mintedNFTs = await getMintedNFTs();
-    const notPublishedNFTS = mintedNFTs.filter(
-      (mintedNFT) => mintedNFT.state !== "3"
+    const notBurnedNFTs = mintedNFTs.filter(
+      (mintedNFT) => mintedNFT.state !== "2"
     );
 
     return res.status(200).json({
       ok: true,
-      notPublishedNFTS,
+      notBurnedNFTs,
     });
   } catch (err) {
     console.error(err);
@@ -37,6 +38,32 @@ const getNFTsMinted = async (req, res = response) => {
     return res.status(500).json({
       ok: false,
       msg: "Internal server error",
+    });
+  }
+};
+
+const getNFT = async (req, res = response) => {
+  const { id: tokenId } = req.params;
+
+  try {
+    const NFTInfo = await getNFTInfo(tokenId);
+
+    if (NFTInfo) {
+      return res.status(200).json({
+        ok: true,
+        NFTInfo,
+      });
+    } else {
+      return res.status(404).json({
+        ok: false,
+        errors: [`NFT with token id: ${tokenId} not found... `],
+      });
+    }
+  } catch (e) {
+    console.error(e);
+    return res.status(500).json({
+      ok: false,
+      errors: ["Internal server error"],
     });
   }
 };
@@ -72,6 +99,8 @@ const getLandVCUs = async (req, res = response) => {
 const mintNFT = async (req, res = response) => {
   const { landAttributes, species, points } = req.body;
 
+  console.log(req.body);
+
   try {
     const initialTCO2 = getInitialTCO2(species);
     landAttributes.initialTCO2 = initialTCO2;
@@ -84,9 +113,9 @@ const mintNFT = async (req, res = response) => {
     return res.status(201).json({
       ok: true,
       receipts: [
-        { transaction: "Minting", mintingReceipt },
-        { transaction: "Set Species", setSpeciesReceipt },
-        { transaction: "Set Points", setPointsReceipt },
+        { transaction: "Minting", receipt: mintingReceipt },
+        { transaction: "Set Species", receipt: setSpeciesReceipt },
+        { transaction: "Set Points", receipt: setPointsReceipt },
       ],
     });
   } catch (err) {
@@ -119,4 +148,4 @@ const updateState = async (req, res = response) => {
   }
 };
 
-module.exports = { mintNFT, getNFTsMinted, updateState, getLandVCUs };
+module.exports = { mintNFT, getNFTsMinted, updateState, getLandVCUs, getNFT };
