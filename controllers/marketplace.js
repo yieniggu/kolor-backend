@@ -31,13 +31,13 @@ const newOffsetEmissions = async (req, res = response) => {
 const getPublishedLands = async (req, res = response) => {
   try {
     const mintedNFTs = await getMintedNFTs();
-    const publishedNFTS = mintedNFTs.filter(
+    const publishedLands = mintedNFTs.filter(
       (mintedNFT) => mintedNFT.state === "3"
     );
 
     return res.status(200).json({
       ok: true,
-      publishedNFTS,
+      publishedLands,
     });
   } catch (err) {
     console.error(err);
