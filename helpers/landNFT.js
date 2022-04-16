@@ -1,4 +1,6 @@
 const Web3 = require("web3");
+const { v4: uuidv4 } = require("uuid");
+
 const {
   maxDecimalsOf,
   normalizeNumber,
@@ -47,6 +49,23 @@ const getMintedNFTs = async () => {
   return mintedNFTS;
 };
 
+/* Get nft info of a single land */
+const getNFTInfo = async (tokenId) => {
+  const owner = await NFTContract.methods.ownerOf(tokenId).call();
+
+  let NFTInfo = await NFTContract.methods.getNFTInfo(tokenId).call();
+  NFTInfo = extractNFTProps(NFTInfo);
+  const species = await getSpecies(tokenId);
+  const points = await getPoints(tokenId);
+
+  NFTInfo.owner = owner;
+  NFTInfo.species = species;
+  NFTInfo.points = points;
+  NFTInfo.tokenId = tokenId;
+
+  return NFTInfo;
+};
+
 /* Gett all species of a given land */
 const getSpecies = async (tokenId) => {
   const totalSpecies = await NFTContract.methods.totalSpeciesOf(tokenId).call();
@@ -79,17 +98,23 @@ const getVCUs = async (tokenId) => {
   let NFTInfo = await NFTContract.methods.getNFTInfo(tokenId).call();
   NFTInfo = extractNFTProps(NFTInfo);
   //Generated VCUs
-  const generatedVCUs = await NFTContract.methods.totalVCUSEmitedBy(tokenId).call();
-  //Sold VCUs  
+  const generatedVCUs = await NFTContract.methods
+    .totalVCUSEmitedBy(tokenId)
+    .call();
+  //Sold VCUs
   const VCUsLeft = await NFTContract.methods.getVCUSLeft(tokenId).call();
-  const soldTCO2 = generatedVCUs - VCUsLeft
+  const soldTCO2 = generatedVCUs - VCUsLeft;
   //Projected VCUs
-  const fiveYears = 157680000 //in seconds. Replace with liberation Date if implemented
+  const fiveYears = 157680000; //in seconds. Replace with liberation Date if implemented
   const timeElapsed = Math.floor(Date.now() / 1000) - NFTInfo.creationDate;
   const timeTotal = fiveYears - NFTInfo.creationDate;
-  const projectedVCUs = (generatedVCUs * timeTotal)/timeElapsed;
-  
-  return {'generatedVCUs':generatedVCUs,'projectedVCUs':projectedVCUs,'soldVCUs':soldTCO2};
+  const projectedVCUs = (generatedVCUs * timeTotal) / timeElapsed;
+
+  return {
+    generatedVCUs: generatedVCUs,
+    projectedVCUs: projectedVCUs,
+    soldVCUs: soldTCO2,
+  };
 };
 
 /* ############################ 
@@ -104,7 +129,6 @@ const safeMint = async (landAttributes) => {
   let {
     toAddress,
     name,
-    identifier,
     landOwnerAlias,
     size,
     country,
@@ -118,6 +142,7 @@ const safeMint = async (landAttributes) => {
 
   const decimals = maxDecimalsOf(landAttributes);
 
+  const identifier = uuidv4();
   const { address } = web3.eth.accounts.privateKeyToAccount(
     process.env.DEV_PRIVATE_KEY
   );
@@ -377,4 +402,5 @@ module.exports = {
   setSpecies,
   setPoints,
   getVCUs,
+  getNFTInfo,
 };
