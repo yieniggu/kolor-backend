@@ -8,10 +8,8 @@ const { jwtValidator } = require("../middlewares/jwtValidator");
 
 const router = new Router();
 
-router.use(jwtValidator);
-
 router.get("/", getPublishedLands);
 
-router.post("/", [isAdmin], newOffsetEmissions);
+router.post("/", [jwtValidator, isAdmin], newOffsetEmissions);
 
 module.exports = router;
