@@ -80,6 +80,7 @@ const login = async (req, res = response) => {
       uid: user.id,
       name: user.name,
       token,
+      role: user.role,
     });
   } catch (error) {
     console.error(err);
@@ -95,12 +96,14 @@ const refreshJWT = async (req, res = response) => {
 
   // generate new token and return in request
   const token = await generateJWT(uid, name);
+  const { role } = await User.findOne({ uid });
 
   res.json({
     ok: true,
     uid,
     name,
     token,
+    role,
   });
 };
 
