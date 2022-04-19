@@ -9,7 +9,6 @@ const OffsetRequestSchema = Schema({
   email: {
     type: String,
     required: true,
-    unique: true,
   },
   VCUs: {
     type: Number,
@@ -31,11 +30,7 @@ const OffsetRequestSchema = Schema({
     type: String,
     required: true,
   },
-  state: {
-    type: String,
-    required: true,
-    default: "created",
-  },
+  company: String,
   comments: String,
 });
 

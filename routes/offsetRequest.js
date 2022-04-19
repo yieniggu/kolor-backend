@@ -16,6 +16,6 @@ router.get("/:id", getOffsetRequest);
 
 router.post("/", createOffsetRequest);
 
-router.put("/:id", updateOffsetRequest);
+router.put("/:id", [jwtValidator, isAdmin], updateOffsetRequest);
 
 module.exports = router;
