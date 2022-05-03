@@ -27,6 +27,7 @@ const createUser = async (req, res = response) => {
     // create eth account
     const { address, privateKey } = await createWallet();
 
+    user.name = name;
     user.address = address;
     user.privateKey = privateKey;
 
@@ -34,7 +35,7 @@ const createUser = async (req, res = response) => {
     await user.save();
 
     // Generate JWT
-    const token = await generateJWT(user.id, user.name);
+    const token = await generateJWT(user.id, user.name, user.role);
 
     res.status(201).json({
       ok: true,
@@ -59,7 +60,7 @@ const login = async (req, res = response) => {
     if (!user) {
       return res.status(400).json({
         ok: false,
-        msg: "User with email doesn't exist",
+        errors: ["User with email doesn't exist"],
       });
     }
 
@@ -69,34 +70,37 @@ const login = async (req, res = response) => {
     if (!validPassword) {
       return res.status(400).json({
         ok: false,
-        msg: "Wrong password",
+        errors: ["Wrong password"],
       });
     }
 
+    console.log(user);
     // Create JWT
-    const token = await generateJWT(user.id, user.name);
+    const token = await generateJWT(user.id, user.name, user.role);
     res.json({
       ok: true,
       uid: user.id,
       name: user.name,
       token,
       role: user.role,
+      address: user.address,
     });
   } catch (error) {
-    console.error(err);
+    console.error(error);
     return res.status(500).json({
       ok: false,
-      msg: "Error, please reach admin for further notice",
+      errors: ["Error, please reach admin for further notice"],
     });
   }
 };
 
 const refreshJWT = async (req, res = response) => {
-  const { uid, name } = req;
+  console.log(req);
+  const { uid, name, role } = req;
 
   // generate new token and return in request
-  const token = await generateJWT(uid, name);
-  const { role } = await User.findOne({ uid });
+  const token = await generateJWT(uid, name, role);
+  //const { role } = await User.findOne({ uid });
 
   res.json({
     ok: true,
