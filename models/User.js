@@ -18,6 +18,14 @@ const UserSchema = Schema({
     type: String,
     required: true,
   },
+  address: {
+    type: String,
+    unique: true,
+  },
+  privateKey: {
+    type: String,
+    unique: true,
+  },
 });
 
 module.exports = model("User", UserSchema);
