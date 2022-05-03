@@ -1,8 +1,14 @@
 const User = require("../models/User");
 
 const isAdmin = async (req, res, next) => {
+  console.log(req.uid);
+
   try {
-    const { role } = await User.findById(req.uid);
+    const user = await User.findById(req.uid);
+
+    console.log(user);
+
+    const { role } = user;
 
     if (role !== "admin") {
       return res.status(400).json({
