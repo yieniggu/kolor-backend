@@ -21,12 +21,13 @@ router.post(
     check("email", "Valid email required").isEmail(),
     check("password", "Min password length must be 6").isLength({ min: 6 }),
     validateFields,
+    jwtValidator,
     isAdmin,
   ],
   createUser
 );
 
-// login
+// login|
 router.post(
   "/",
   [
