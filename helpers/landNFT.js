@@ -6,8 +6,11 @@ const {
   normalizeNumber,
   convertSpeciesToArray,
   convertPointsToArray,
+  oneYearInSeconds,
 } = require("../utils/web3Utils");
 const { createNFTContract, getGasPrice, getNonce } = require("./web3Common");
+const fromExponential = require("from-exponential");
+const { getLandTokenInfo, getLandTokenHolders } = require("./landToken");
 
 const NFTContract = createNFTContract();
 const web3 = new Web3("https://alfajores-forno.celo-testnet.org");
@@ -29,16 +32,7 @@ const getMintedNFTs = async () => {
     const owner = await NFTContract.methods.ownerOf(i).call();
 
     if (owner != burnAddress) {
-      let NFTInfo = await NFTContract.methods.getNFTInfo(i).call();
-      NFTInfo = extractNFTProps(NFTInfo);
-      //console.log(`nft info of token ${i}: `, NFTInfo);
-      const species = await getSpecies(i);
-      const points = await getPoints(i);
-
-      NFTInfo.owner = owner;
-      NFTInfo.species = species;
-      NFTInfo.points = points;
-      NFTInfo.tokenId = i;
+      let NFTInfo = await getNFTInfo(i);
       console.log("NFT ", i, NFTInfo);
       mintedNFTS.push(NFTInfo);
     } else {
@@ -56,14 +50,26 @@ const getNFTInfo = async (tokenId) => {
   let NFTInfo = await NFTContract.methods.getNFTInfo(tokenId).call();
   NFTInfo = extractNFTProps(NFTInfo);
   const species = await getSpecies(tokenId);
+  const { emittedVCUs, projectedVCUS } = getVCUsEmitted(species);
+  const VCUsLeft = emittedVCUs - NFTInfo.soldTCO2;
   const points = await getPoints(tokenId);
+  let landTokenInfo = await getLandTokenInfo(tokenId);
+  const landTokenHolders = await getLandTokenHolders(tokenId);
 
   NFTInfo.owner = owner;
   NFTInfo.species = species;
   NFTInfo.points = points;
+  NFTInfo.VCUInfo = { emittedVCUs, projectedVCUS, VCUsLeft };
   NFTInfo.tokenId = tokenId;
+  NFTInfo.landTokenInfo = extractLandTokenProps(landTokenInfo);
+  NFTInfo.landTokenInfo.totalHolders = landTokenHolders;
 
+  console.log("NFTINFO: ", NFTInfo);
   return NFTInfo;
+};
+
+const getNFTtotalSupply = async () => {
+  return await NFTContract.methods.totalSupply().call();
 };
 
 /* Gett all species of a given land */
@@ -73,6 +79,7 @@ const getSpecies = async (tokenId) => {
   for (let i = 0; i < totalSpecies; i++) {
     let specie = await NFTContract.methods.species(tokenId, i).call();
     specie = extractSpecieProps(specie);
+    console.log("specie: ", specie);
     species.push(specie);
   }
 
@@ -94,27 +101,47 @@ const getPoints = async (tokenId) => {
 };
 
 /* VCUs generated, projected and sold */
-const getVCUs = async (tokenId) => {
-  let NFTInfo = await NFTContract.methods.getNFTInfo(tokenId).call();
-  NFTInfo = extractNFTProps(NFTInfo);
-  //Generated VCUs
-  const generatedVCUs = await NFTContract.methods
-    .totalVCUSEmitedBy(tokenId)
-    .call();
-  //Sold VCUs
-  const VCUsLeft = await NFTContract.methods.getVCUSLeft(tokenId).call();
-  const soldTCO2 = generatedVCUs - VCUsLeft;
-  //Projected VCUs
-  const fiveYears = 157680000; //in seconds. Replace with liberation Date if implemented
-  const timeElapsed = Math.floor(Date.now() / 1000) - NFTInfo.creationDate;
-  const timeTotal = fiveYears - NFTInfo.creationDate;
-  const projectedVCUs = (generatedVCUs * timeTotal) / timeElapsed;
+const getVCUsEmitted = (species) => {
+  let emittedVCUs = 0;
+  let projectedVCUS = 0;
 
-  return {
-    generatedVCUs: generatedVCUs,
-    projectedVCUs: projectedVCUs,
-    soldVCUs: soldTCO2,
-  };
+  species.map((specie) => {
+    const { decimals, creationDate, TCO2perSecond } = specie;
+    const now = Date.now() / 1000;
+
+    // console.log(
+    //   "decimals: ",
+    //   decimals,
+    //   " | creation date: ",
+    //   creationDate,
+    //   " | TCO2perSecond: ",
+    //   TCO2perSecond,
+    //   " | now: ",
+    //   now
+    // );
+
+    console.log("tcops: ", TCO2perSecond);
+    let TCO2normalized = normalizeNumber(TCO2perSecond, decimals * -1, false);
+    if (TCO2normalized.toString().includes("e")) {
+      TCO2normalized = fromExponential(TCO2normalized.toString());
+    }
+
+    console.log(TCO2normalized);
+
+    const elapsedTimeInSeconds = now - creationDate;
+
+    console.log("elapsed time in secs: ", elapsedTimeInSeconds);
+
+    emittedVCUs += TCO2normalized * elapsedTimeInSeconds;
+    projectedVCUS += TCO2normalized * oneYearInSeconds;
+    console.log("emited: ", emittedVCUs);
+  });
+
+  return { emittedVCUs, projectedVCUS };
+};
+
+const landExists = async (tokenId) => {
+  return (await NFTContract.methods.owner(tokenId).call()) !== burnAddress;
 };
 
 /* ############################ 
@@ -188,7 +215,7 @@ const safeMint = async (landAttributes) => {
   );
 
   receipt.tokenId = parseInt(receipt.logs[0].topics[3]);
-  console.log("mint nft receipt: ", receipt);
+  //console.log("mint nft receipt: ", receipt);
   return receipt;
 };
 
@@ -229,14 +256,14 @@ const updateLandState = async (tokenId, state) => {
   return receipt;
 };
 
-const setSpecies = async (tokenId, species) => {
+const setSpecies = async (tokenId, species, landSize) => {
   if (!species) return null;
 
   const { address } = web3.eth.accounts.privateKeyToAccount(
     process.env.DEV_PRIVATE_KEY
   );
 
-  const speciesAsArrays = convertSpeciesToArray(species);
+  const speciesAsArrays = convertSpeciesToArray(species, landSize);
   console.log("sparrs: ", speciesAsArrays);
 
   const encodedTransaction = await NFTContract.methods
@@ -267,7 +294,7 @@ const setSpecies = async (tokenId, species) => {
     signedTransaction.raw || signedTransaction.rawTransaction
   );
 
-  console.log("set species receipt: ", receipt);
+  //console.log("set species receipt: ", receipt);
 
   return receipt;
 };
@@ -329,7 +356,7 @@ const extractSpecieProps = (specie) => {
     landId,
     size,
     TCO2perSecond,
-    TCO2,
+    TCO2perYear,
     creationDate,
     updateDate,
     decimals,
@@ -342,7 +369,7 @@ const extractSpecieProps = (specie) => {
     landId,
     size,
     TCO2perSecond,
-    TCO2,
+    TCO2perYear,
     creationDate,
     updateDate,
     decimals,
@@ -371,8 +398,7 @@ const extractNFTProps = (NFTInfo) => {
     city,
     stateOrRegion,
     creationDate,
-    initialTCO2,
-    currentTCO2,
+    initialTCO2perYear,
     soldTCO2,
     decimals,
     state,
@@ -387,20 +413,34 @@ const extractNFTProps = (NFTInfo) => {
     city,
     stateOrRegion,
     creationDate,
-    initialTCO2,
-    currentTCO2,
+    initialTCO2perYear,
     soldTCO2,
     decimals,
     state,
   };
 };
 
+const extractLandTokenProps = (landTokenInfo) => {
+  const { available, initialAmount, currentAmount, sold, creationDate } =
+    landTokenInfo;
+
+  return {
+    available,
+    initialAmount,
+    currentAmount,
+    sold,
+    creationDate,
+  };
+};
+
 module.exports = {
   safeMint,
   getMintedNFTs,
+  getNFTtotalSupply,
   updateLandState,
   setSpecies,
   setPoints,
-  getVCUs,
+  getVCUsEmitted,
   getNFTInfo,
+  extractLandTokenProps,
 };

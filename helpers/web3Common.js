@@ -1,4 +1,6 @@
 const Web3 = require("web3");
+const { ERC20Abi } = require("../abis/ERC20");
+const { landTokenAbi } = require("../abis/LandToken");
 const { marketplaceAbi } = require("../abis/Marketplace");
 const { NFTAbi } = require("../abis/NFT");
 
@@ -29,6 +31,21 @@ const createMarketplaceContract = () => {
   return contract;
 };
 
+const createLandTokenContract = () => {
+  const contract = new web3.eth.Contract(
+    landTokenAbi,
+    process.env.LAND_TOKEN_ADDRESS
+  );
+
+  return contract;
+};
+
+const createERC20Contract = (address) => {
+  const contract = new web3.eth.Contract(ERC20Abi, address);
+
+  return contract;
+};
+
 const getGasPrice = async () => {
   return await web3.eth.getGasPrice();
 };
@@ -49,6 +66,8 @@ module.exports = {
   createWallet,
   createNFTContract,
   createMarketplaceContract,
+  createLandTokenContract,
+  createERC20Contract,
   getGasPrice,
   getNonce,
 };

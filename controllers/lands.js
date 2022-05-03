@@ -8,7 +8,8 @@ const {
   getNFTInfo,
 } = require("../helpers/landNFT");
 const { safeMint } = require("../helpers/landNFT");
-const { getInitialTCO2 } = require("../utils/web3Utils");
+const { setLandTokenInfo } = require("../helpers/landToken");
+const { getInitialTCO2perYear } = require("../utils/web3Utils");
 
 /* ############################ 
 
@@ -19,7 +20,7 @@ const { getInitialTCO2 } = require("../utils/web3Utils");
 
 /* Returns all minted and not burned NFTS */
 const getNFTsMinted = async (req, res = response) => {
-  console.log(req.body);
+  //console.log(req.body);
   console.log(req.params);
 
   try {
@@ -37,7 +38,7 @@ const getNFTsMinted = async (req, res = response) => {
 
     return res.status(500).json({
       ok: false,
-      msg: "Internal server error",
+      errors: ["Internal server error"],
     });
   }
 };
@@ -60,7 +61,7 @@ const getNFT = async (req, res = response) => {
       });
     }
   } catch (e) {
-    console.error(e);
+    console.log(e);
     return res.status(500).json({
       ok: false,
       errors: ["Internal server error"],
@@ -84,7 +85,7 @@ const getLandVCUs = async (req, res = response) => {
 
     return res.status(500).json({
       ok: false,
-      msg: "Internal server error. VCUs",
+      errors: ["Internal server error"],
     });
   }
 };
@@ -99,30 +100,47 @@ const getLandVCUs = async (req, res = response) => {
 const mintNFT = async (req, res = response) => {
   const { landAttributes, species, points } = req.body;
 
-  console.log(req.body);
+  //console.log(req.body);
 
   try {
-    const initialTCO2 = getInitialTCO2(species);
+    const initialTCO2 = getInitialTCO2perYear(species);
+    console.log("initial tco2: ", initialTCO2);
     landAttributes.initialTCO2 = initialTCO2;
 
     const mintingReceipt = await safeMint(landAttributes);
+    const landTokenMintingReceipt = await setLandTokenInfo(
+      mintingReceipt.tokenId,
+      landAttributes.size / 10
+    );
 
-    const setSpeciesReceipt = await setSpecies(mintingReceipt.tokenId, species);
-    const setPointsReceipt = await setPoints(mintingReceipt.tokenId, points);
+    const receipts = [
+      { transaction: "Minting", receipt: mintingReceipt },
+      { transaction: "Land Tokens", receipt: landTokenMintingReceipt },
+    ];
+
+    if (species) {
+      const setSpeciesReceipt = await setSpecies(
+        mintingReceipt.tokenId,
+        species,
+        landAttributes.size
+      );
+      receipts.push({ transaction: "Set Species", receipt: setSpeciesReceipt });
+    }
+
+    if (points) {
+      const setPointsReceipt = await setPoints(mintingReceipt.tokenId, points);
+      receipts.push({ transaction: "Set Points", receipt: setPointsReceipt });
+    }
 
     return res.status(201).json({
       ok: true,
-      receipts: [
-        { transaction: "Minting", receipt: mintingReceipt },
-        { transaction: "Set Species", receipt: setSpeciesReceipt },
-        { transaction: "Set Points", receipt: setPointsReceipt },
-      ],
+      receipts,
     });
   } catch (err) {
     console.error(err);
     return res.status(500).json({
       ok: false,
-      msg: "Internal server error",
+      errors: ["Internal server error"],
     });
   }
 };
@@ -143,7 +161,7 @@ const updateState = async (req, res = response) => {
 
     return res.status(500).json({
       ok: false,
-      msg: "Internal server error",
+      errors: ["Internal server error"],
     });
   }
 };

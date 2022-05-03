@@ -21,6 +21,7 @@ app.use("/api/auth", require("./routes/auth"));
 app.use("/api/lands", require("./routes/lands"));
 app.use("/api/marketplace", require("./routes/marketplace"));
 app.use("/api/offsets", require("./routes/offsetRequest"));
+app.use("/api/tokens", require("./routes/token"));
 
 // Listen requests
 app.listen(process.env.PORT, () => {
