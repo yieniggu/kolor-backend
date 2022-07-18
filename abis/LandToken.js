@@ -130,7 +130,7 @@ const landTokenAbi = [
         ],
       },
     ],
-    name: "investmentOf",
+    name: "investmentOfAddress",
     inputs: [
       { type: "address", name: "account", internalType: "address" },
       { type: "uint256", name: "index", internalType: "uint256" },
@@ -153,7 +153,7 @@ const landTokenAbi = [
         ],
       },
     ],
-    name: "investmentOf",
+    name: "investmentOfLand",
     inputs: [
       { type: "uint256", name: "tokenId", internalType: "uint256" },
       { type: "uint256", name: "index", internalType: "uint256" },
@@ -208,7 +208,7 @@ const landTokenAbi = [
         ],
       },
     ],
-    name: "investmentsOf",
+    name: "investmentsOfAddress",
     inputs: [{ type: "address", name: "account", internalType: "address" }],
   },
   {
@@ -228,7 +228,7 @@ const landTokenAbi = [
         ],
       },
     ],
-    name: "investmentsOf",
+    name: "investmentsOfLand",
     inputs: [{ type: "uint256", name: "tokenId", internalType: "uint256" }],
   },
   {
@@ -367,15 +367,15 @@ const landTokenAbi = [
     type: "function",
     stateMutability: "view",
     outputs: [{ type: "uint256", name: "", internalType: "uint256" }],
-    name: "totalInvestmentsOf",
-    inputs: [{ type: "uint256", name: "tokenId", internalType: "uint256" }],
+    name: "totalInvestmentsOfAddress",
+    inputs: [{ type: "address", name: "account", internalType: "address" }],
   },
   {
     type: "function",
     stateMutability: "view",
     outputs: [{ type: "uint256", name: "", internalType: "uint256" }],
-    name: "totalInvestmentsOf",
-    inputs: [{ type: "address", name: "account", internalType: "address" }],
+    name: "totalInvestmentsOfLand",
+    inputs: [{ type: "uint256", name: "tokenId", internalType: "uint256" }],
   },
   {
     type: "function",

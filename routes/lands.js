@@ -9,6 +9,7 @@ const {
   getNFT,
 } = require("../controllers/lands");
 const { isAdmin } = require("../helpers/isAdmin");
+const { getInvestments } = require("../controllers/token");
 
 const router = new Router();
 

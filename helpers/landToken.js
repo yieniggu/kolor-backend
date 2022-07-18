@@ -11,7 +11,6 @@ const landTokenContract = createLandTokenContract();
 const web3 = new Web3("https://alfajores-forno.celo-testnet.org");
 const burnAddress = "0x0000000000000000000000000000000000000000";
 
-
 const setLandTokenInfo = async (tokenId, initialAmount) => {
   const { address } = web3.eth.accounts.privateKeyToAccount(
     process.env.DEV_PRIVATE_KEY
@@ -106,10 +105,22 @@ const getLandTokenBalancesOf = async (address, ids) => {
   return [];
 };
 
+const getInvestmentsOf = async (address) => {
+  console.log(`get investments of: ${address}`);
+
+  const investments = await landTokenContract.methods
+    .investmentsOfAddress(address)
+    .call();
+
+  console.log("inv: ", investments);
+  return investments;
+};
+
 module.exports = {
   setLandTokenInfo,
   addNewInvestment,
   getLandTokenInfo,
   getLandTokenBalancesOf,
   getLandTokenHolders,
+  getInvestmentsOf,
 };

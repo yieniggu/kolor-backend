@@ -9,6 +9,7 @@ const {
 } = require("../helpers/landNFT");
 const { safeMint } = require("../helpers/landNFT");
 const { setLandTokenInfo } = require("../helpers/landToken");
+const User = require("../models/User");
 const { getInitialTCO2perYear } = require("../utils/web3Utils");
 
 /* ############################ 
@@ -166,4 +167,10 @@ const updateState = async (req, res = response) => {
   }
 };
 
-module.exports = { mintNFT, getNFTsMinted, updateState, getLandVCUs, getNFT };
+module.exports = {
+  mintNFT,
+  getNFTsMinted,
+  updateState,
+  getLandVCUs,
+  getNFT,
+};

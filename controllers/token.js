@@ -1,5 +1,6 @@
 const { response } = require("express");
 const { type } = require("express/lib/response");
+const { getInvestmentsOf } = require("../helpers/landToken");
 const { getNativeBalances, getLandTokenBalances } = require("../helpers/token");
 const User = require("../models/User");
 
@@ -21,7 +22,7 @@ const getTokenBalances = async (req, res = response) => {
 
     return res.status(200).json({
       ok: true,
-      balances: { nativeBalances, landTokenBalances },
+      balances: { nativeBalances, landTokenBalances, address: user.address },
     });
   } catch (error) {
     console.error(error);
@@ -32,6 +33,29 @@ const getTokenBalances = async (req, res = response) => {
   }
 };
 
+/* get investments of a given address */
+const getInvestments = async (req, res = response) => {
+  try {
+    const { address } = await User.findById(req.uid);
+
+    const investments = await getInvestmentsOf(address);
+
+    res.status(200).json({
+      ok: true,
+      address,
+      investments,
+    });
+  } catch (e) {
+    console.error(e);
+
+    res.status(500).json({
+      ok: false,
+      errors: ["Internal server error"],
+    });
+  }
+};
+
 module.exports = {
   getTokenBalances,
+  getInvestments,
 };
